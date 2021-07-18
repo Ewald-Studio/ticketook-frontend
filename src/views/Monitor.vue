@@ -1,28 +1,33 @@
 <template>
     <div id="monitor" class="container">
-        <b-row v-if="message">
-            <b-col cols="12">
-                <h3>{{ message }}</h3>
-            </b-col>
-        </b-row>
-        <b-row>
-            <!-- <b-col cols="2">
-                <h5>Недавние</h5>
-                <p v-for="ticket in session.tickets.closed.slice(-9)" :key="ticket.id">{{ ticket.full_number }}</p>
-            </b-col> -->
-            <b-col cols="2">
-                <h5>В очереди</h5>
-                <p v-for="ticket in session.tickets.pending.slice(0,10)" :key="ticket.id">{{ ticket.full_number }}</p>
-                <p v-if="session.tickets.pending.length > 10">И ещё {{ session.tickets.pending.length - 10 }}</p>
-            </b-col>
-            <b-col cols="2">
-                <h5>Активные</h5>
-                <p v-for="ticket in session.tickets.active" :key="ticket.id">{{ ticket.full_number }}</p>
-            </b-col>
-            <b-col cols="6">
-                <h1 v-if="current_ticket">{{ current_ticket.full_number }}</h1>
-            </b-col>
-        </b-row>
+        <template v-if="session.id">
+            <b-row v-if="message">
+                <b-col cols="12">
+                    <h3>{{ message }}</h3>
+                </b-col>
+            </b-row>
+            <b-row>
+                <!-- <b-col cols="2">
+                    <h5>Недавние</h5>
+                    <p v-for="ticket in session.tickets.closed.slice(-9)" :key="ticket.id">{{ ticket.full_number }}</p>
+                </b-col> -->
+                <b-col cols="4">
+                    <h5>В очереди</h5>
+                    <p v-for="ticket in session.tickets.pending.slice(0,10)" :key="ticket.id">{{ ticket.full_number }}</p>
+                    <p v-if="session.tickets.pending.length > 10">И ещё {{ session.tickets.pending.length - 10 }}</p>
+                </b-col>
+                <b-col cols="4">
+                    <h5>Активные</h5>
+                    <p v-for="ticket in session.tickets.active" :key="ticket.id">{{ ticket.full_number }}</p>
+                </b-col>
+                <b-col cols="4" class="text-center">
+                    <h1 v-if="current_ticket" class="mb-2">{{ current_ticket.full_number }}</h1>
+                </b-col>
+            </b-row>
+        </template>
+        <template v-else>
+            <h1 class="text-center mb-4">Выдача талонов приостановлена</h1>
+        </template>
     </div>
 </template>
 
@@ -101,8 +106,10 @@ export default {
                 })
         },
         fetchSession() {
-            return axios.get(`/session/${this.zone.active_session_id}/info/`)
-                .then(response => this.session = response.data)
+            if (this.zone.active_session_id) {
+                return axios.get(`/session/${this.zone.active_session_id}/info/`)
+                    .then(response => this.session = response.data)
+            }
         },
         fetchLog() {
             return axios.get(`/zone/${this.zone_id}/log/?offset=${this.zone.log_offset}`)
@@ -121,6 +128,10 @@ export default {
                         this.alarmTicket(item.ticket)
                     }
                     if (item.action == 'TICKET-CLOSE' || item.action == 'TICKET-SKIP') {
+                        this.fetchSession()
+                    }
+                    if (item.action == 'SESSION-NEW') {
+                        this.zone.active_session_id = item.session.id
                         this.fetchSession()
                     }
                     if (item.action == 'SESSION-PAUSE') {

@@ -1,17 +1,25 @@
 <template>
     <div id="terminal" class="container">
-        <b-col>
+        <b-col v-if="session.id">
             <b-row class="text-center mt-4">
                 <template v-if="message">
                     <p>{{ message }}</p>
                 </template>
                 <template v-else>
-                    <b-btn size="lg" variant="primary" @click="issueTicket" v-if="!issued_ticket">Получить билет</b-btn>
+                    <div v-if="!issued_ticket">
+                        <h1 class="mt-4">Электронная очередь</h1>
+                        <b-btn size="lg" class="mt-4" variant="primary" @click="issueTicket">Получить билет</b-btn>
+                    </div>
                     <div v-else>
                         <h1>Ваш билет: {{ issued_ticket }}</h1>
                         <h2>Перед Вами в очереди: {{ pending }}</h2>
                     </div>
                 </template>
+            </b-row>
+        </b-col>
+        <b-col v-else>
+            <b-row class="text-center mt-4">
+                <h1>Выдача талонов приостановлена</h1>
             </b-row>
         </b-col>
     </div>
@@ -24,7 +32,7 @@ import each from 'lodash/each'
 const ACCESS_KEY = '123'
 const LOG_REFRESH_PERIOD = 5000
 const SESSION_REFRESH_PERIOD = 15000
-const TICKET_SHOW_TIME = 7000
+const TICKET_SHOW_TIME = 5000
 
 export default {
     props: [
@@ -86,8 +94,10 @@ export default {
                 })
         },
         fetchSession() {
-            return axios.get(`/session/${this.zone.active_session_id}/info/`)
-                .then(response => this.session = response.data)
+            if (this.zone.active_session_id) {
+                return axios.get(`/session/${this.zone.active_session_id}/info/`)
+                    .then(response => this.session = response.data)
+            }
         },
         fetchLog() {
             return axios.get(`/zone/${this.zone_id}/log/?offset=${this.zone.log_offset}`)
@@ -98,6 +108,10 @@ export default {
                 each(log, item => {
                     if (item.id < this.zone.log_offset) {
                         console.log('oops')
+                    }
+                    if (item.action == 'SESSION-NEW') {
+                        this.zone.active_session_id = item.session.id
+                        this.fetchSession()
                     }
                     if (item.action == 'SESSION-PAUSE') {
                         this.session.status = 'paused'

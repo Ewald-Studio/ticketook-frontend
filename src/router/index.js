@@ -18,8 +18,9 @@ const routes = [
     component: () => import(/* webpackChunkName: "monitor" */ '../views/Monitor.vue')
   },
   {
-    path: '/operator',
+    path: '/operator/:zone_id',
     name: 'operator',
+    props: true,
     component: () => import(/* webpackChunkName: "about" */ '../views/Operator.vue')
   },
   {
