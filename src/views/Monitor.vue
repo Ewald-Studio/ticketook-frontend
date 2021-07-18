@@ -6,13 +6,14 @@
             </b-col>
         </b-row>
         <b-row>
-            <b-col cols="2">
+            <!-- <b-col cols="2">
                 <h5>Недавние</h5>
                 <p v-for="ticket in session.tickets.closed.slice(-9)" :key="ticket.id">{{ ticket.full_number }}</p>
-            </b-col>
+            </b-col> -->
             <b-col cols="2">
                 <h5>В очереди</h5>
-                <p v-for="ticket in session.tickets.pending.slice(-9)" :key="ticket.id">{{ ticket.full_number }}</p>
+                <p v-for="ticket in session.tickets.pending.slice(0,10)" :key="ticket.id">{{ ticket.full_number }}</p>
+                <p v-if="session.tickets.pending.length > 10">И ещё {{ session.tickets.pending.length - 10 }}</p>
             </b-col>
             <b-col cols="2">
                 <h5>Активные</h5>
@@ -30,7 +31,7 @@ import axios from 'axios'
 import each from 'lodash/each'
 
 const LOG_REFRESH_PERIOD = 5000
-const SESSION_REFRESH_PERIOD = 15000
+const SESSION_REFRESH_PERIOD = 30000
 const TICKET_SHOW_TIME = 5000
 
 export default {
@@ -119,6 +120,9 @@ export default {
                     if (item.action == 'TICKET-TAKE') {
                         this.alarmTicket(item.ticket)
                     }
+                    if (item.action == 'TICKET-CLOSE' || item.action == 'TICKET-SKIP') {
+                        this.fetchSession()
+                    }
                     if (item.action == 'SESSION-PAUSE') {
                         this.session.status = 'paused'
                     }
@@ -133,11 +137,11 @@ export default {
             }
         },
         addTicket(ticket) {
-            this.session.tickets.pending.unshift(ticket)
+            this.fetchSession()
         },
         alarmTicket(ticket) {
+            // this.fetchSession()
             this.current_ticket = ticket
-            this.session.tickets.active.unshift(ticket)
             clearTimeout(this.timers.ticket)
             this.timers.ticket = setTimeout(() => this.current_ticket = null, TICKET_SHOW_TIME)
         }
