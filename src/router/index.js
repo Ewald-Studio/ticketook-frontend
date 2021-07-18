@@ -23,8 +23,9 @@ const routes = [
     component: () => import(/* webpackChunkName: "about" */ '../views/Operator.vue')
   },
   {
-    path: '/terminal',
+    path: '/terminal/:zone_id',
     name: 'terminal',
+    props: true,
     component: () => import(/* webpackChunkName: "terminal" */ '../views/Terminal.vue')
   },
 ]
