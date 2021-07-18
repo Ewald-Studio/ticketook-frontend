@@ -1,0 +1,146 @@
+<template>
+    <div id="monitor" class="container">
+        <b-row v-if="message">
+            <b-col cols="12">
+                <h3>{{ message }}</h3>
+            </b-col>
+        </b-row>
+        <b-row>
+            <b-col cols="2">
+                <h5>Недавние</h5>
+                <p v-for="ticket in session.tickets.closed.slice(-9)" :key="ticket.id">{{ ticket.full_number }}</p>
+            </b-col>
+            <b-col cols="2">
+                <h5>В очереди</h5>
+                <p v-for="ticket in session.tickets.pending.slice(-9)" :key="ticket.id">{{ ticket.full_number }}</p>
+            </b-col>
+            <b-col cols="2">
+                <h5>Активные</h5>
+                <p v-for="ticket in session.tickets.active" :key="ticket.id">{{ ticket.full_number }}</p>
+            </b-col>
+            <b-col cols="6">
+                <h1 v-if="current_ticket">{{ current_ticket.full_number }}</h1>
+            </b-col>
+        </b-row>
+    </div>
+</template>
+
+<script>
+import axios from 'axios'
+import each from 'lodash/each'
+
+const LOG_REFRESH_PERIOD = 5000
+const SESSION_REFRESH_PERIOD = 15000
+const TICKET_SHOW_TIME = 5000
+
+export default {
+    props: [
+        'zone_id'
+    ],
+    data() {
+        return {
+            zone: {
+                active_session_id: null,
+                log_offset: 0,
+                services: [],
+                operators: [],
+            },
+            session: {
+                id: null,
+                planned_finish_datetime: null,
+                status: '',
+                tickets: {
+                    pending: [],
+                    closed: [],
+                    active: [],
+                }
+            },
+            timers: {
+                log: null,
+                ticket: null,
+                session: null,
+            },
+            current_ticket: null
+        }
+    },
+    computed: {
+        message() {
+            switch(this.session.status) {
+                case 'paused':
+                    return 'Выдача талонов приостановлена'
+                case 'timeout':
+                case 'finished':
+                    return 'Выдача талонов завершена'
+            }
+            return false
+        }
+    },
+    mounted() {
+        this.fetchZoneInfo()
+    },
+    beforeDestroy() {
+        clearInterval(this.timers.log)
+        clearInterval(this.timers.ticket)
+        clearInterval(this.timers.session)
+    },
+    methods: {
+        fetchZoneInfo() {
+            return axios.get(`/zone/${this.zone_id}/info/`)
+                .then(response => {
+                    this.zone = response.data
+                    this.fetchSession()
+                    this.timers.session = setInterval(this.fetchSession, SESSION_REFRESH_PERIOD)
+                })
+                .then(() => {
+                    this.fetchLog()
+                    this.timers.log = setInterval(this.fetchLog, LOG_REFRESH_PERIOD)
+                })
+                .catch(error => {
+                    console.log(error.response)
+                })
+        },
+        fetchSession() {
+            return axios.get(`/session/${this.zone.active_session_id}/info/`)
+                .then(response => this.session = response.data)
+        },
+        fetchLog() {
+            return axios.get(`/zone/${this.zone_id}/log/?offset=${this.zone.log_offset}`)
+                .then(response => this.processLog(response.data))
+        },
+        processLog(log) {
+            if (log.length > 0) {
+                each(log, item => {
+                    if (item.id < this.zone.log_offset) {
+                        console.log('oops')
+                    }
+                    if (item.action == 'TICKET-ISSUE') {
+                        this.addTicket(item.ticket)
+                    }
+                    if (item.action == 'TICKET-TAKE') {
+                        this.alarmTicket(item.ticket)
+                    }
+                    if (item.action == 'SESSION-PAUSE') {
+                        this.session.status = 'paused'
+                    }
+                    if (item.action == 'SESSION-RESUME') {
+                        this.session.status = 'active'
+                    }
+                    if (item.action == 'SESSION-FINISH') {
+                        this.session.status = 'finished'
+                    }
+                    this.zone.log_offset = item.id
+                })
+            }
+        },
+        addTicket(ticket) {
+            this.session.tickets.pending.unshift(ticket)
+        },
+        alarmTicket(ticket) {
+            this.current_ticket = ticket
+            this.session.tickets.active.unshift(ticket)
+            clearTimeout(this.timers.ticket)
+            this.timers.ticket = setTimeout(() => this.current_ticket = null, TICKET_SHOW_TIME)
+        }
+    }
+}
+</script>
