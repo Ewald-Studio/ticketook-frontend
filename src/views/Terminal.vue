@@ -12,7 +12,7 @@
                     </div>
                     <div v-else>
                         <h1>Ваш билет: {{ issued_ticket }}</h1>
-                        <h2>Перед Вами в очереди: {{ pending }}</h2>
+                        <h2>Перед вами в очереди: {{ pending }}</h2>
                     </div>
                 </template>
             </b-row>
@@ -30,9 +30,9 @@ import axios from 'axios'
 import each from 'lodash/each'
 
 const ACCESS_KEY = '123'
-const LOG_REFRESH_PERIOD = 5000
+const LOG_REFRESH_PERIOD = 3000
 const SESSION_REFRESH_PERIOD = 15000
-const TICKET_SHOW_TIME = 5000
+const TICKET_SHOW_TIME = 1000
 
 export default {
     props: [

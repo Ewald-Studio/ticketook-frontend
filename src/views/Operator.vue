@@ -16,11 +16,15 @@
                 <template v-if="current_ticket">
                     <b-col>
                         <b-btn size="lg" variant="success" :disabled="loading" @click="take">
-                            Закрыть и принять следующий
+                            Следующий талон
                         </b-btn>
                         <br><br>
-                        <b-btn variant="outline-primary" :disabled="loading" @click="skip">
-                            Пропустить и принять следующий
+                        <!-- <b-btn variant="outline-primary" :disabled="loading" @click="skip">
+                            Пропустить талон, позвать следующего
+                        </b-btn> -->
+                        <!-- <br><br> -->
+                        <b-btn variant="outline-secondary" :disabled="loading">
+                            Перерыв
                         </b-btn>
                     </b-col>
                 </template>

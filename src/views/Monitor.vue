@@ -1,5 +1,6 @@
 <template>
     <div id="monitor" class="container">
+        <audio src="../assets/bell.mp3" ref="audio"></audio>
         <template v-if="session.id">
             <b-row v-if="message">
                 <b-col cols="12">
@@ -37,7 +38,7 @@ import each from 'lodash/each'
 
 const LOG_REFRESH_PERIOD = 5000
 const SESSION_REFRESH_PERIOD = 30000
-const TICKET_SHOW_TIME = 5000
+const TICKET_SHOW_TIME = 7000
 
 export default {
     props: [
@@ -66,6 +67,8 @@ export default {
                 ticket: null,
                 session: null,
             },
+            sound_url: '../assets/bell.mp3',
+            new_tickets: [],
             current_ticket: null
         }
     },
@@ -83,6 +86,7 @@ export default {
     },
     mounted() {
         this.fetchZoneInfo()
+        this.timers.ticket = setInterval(this.handleNewTickets, TICKET_SHOW_TIME)
     },
     beforeDestroy() {
         clearInterval(this.timers.log)
@@ -151,10 +155,18 @@ export default {
             this.fetchSession()
         },
         alarmTicket(ticket) {
-            // this.fetchSession()
-            this.current_ticket = ticket
-            clearTimeout(this.timers.ticket)
-            this.timers.ticket = setTimeout(() => this.current_ticket = null, TICKET_SHOW_TIME)
+            this.new_tickets.push(ticket)
+            // this.handleNewTickets()
+            // this.timers.ticket = setTimeout(() => this.current_ticket = null, TICKET_SHOW_TIME)
+        },
+        handleNewTickets() {
+            if (this.new_tickets.length > 0) {
+                this.current_ticket = this.new_tickets.pop()
+                this.$refs.audio.play()
+            }
+            // else {
+            //     this.current_ticket = null
+            // }
         }
     }
 }
