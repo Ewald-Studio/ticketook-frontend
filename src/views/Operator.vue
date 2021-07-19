@@ -7,7 +7,7 @@
                     <h1>{{ session.tickets.pending.length }}</h1>
                 </b-col>
                 <b-col class="text-center" v-if="current_ticket">
-                    <h1>Текущий билет</h1>
+                    <h1>Текущий талон</h1>
                     <h1 v-if="!loading">{{ current_ticket.full_number }}</h1>
                     <h1 v-else><b-spinner></b-spinner></h1>
                 </b-col>
@@ -15,16 +15,12 @@
             <b-row class="text-center mt-4" v-if="session.tickets.pending.length > 0 || current_ticket">
                 <template v-if="current_ticket">
                     <b-col>
-                        <b-btn size="lg" variant="success" :disabled="loading" @click="take">
-                            Следующий талон
+                        <b-btn size="lg" variant="success" :disabled="loading" @click="closeTicket">
+                            Закрыть талон
                         </b-btn>
                         <br><br>
-                        <!-- <b-btn variant="outline-primary" :disabled="loading" @click="skip">
-                            Пропустить талон, позвать следующего
-                        </b-btn> -->
-                        <!-- <br><br> -->
-                        <b-btn variant="outline-secondary" :disabled="loading">
-                            Перерыв
+                        <b-btn variant="outline-primary" :disabled="loading" @click="skipTicket">
+                            Пропустить талон
                         </b-btn>
                     </b-col>
                 </template>
@@ -51,15 +47,16 @@
                 </template>
                 <template v-if="session.status == 'finished'">
                     <b-col>
-                        <b-button-toolbar>
-                            <b-button-group class="mx-2">
-                                <b-btn size="sm" variant="outline-info" @click="sessionResume">Возобновить выдачу</b-btn>
-                            </b-button-group>
-                            <b-button-group>
-                                <b-btn size="sm" variant="outline-danger" @click="sessionSkipPendingTickets">Пропустить все талоны</b-btn>
-                                <b-btn size="sm" variant="outline-primary" @click="sessionNew">Новая сессия</b-btn>
-                            </b-button-group>
-                        </b-button-toolbar>
+                        <b-button-group class="text-center">
+                            <b-btn size="sm" variant="outline-info" @click="sessionResume">Возобновить выдачу</b-btn>
+                            <b-btn size="sm" variant="outline-danger" @click="sessionSkipPendingTickets">Пропустить все талоны</b-btn>
+                            <b-btn size="sm" variant="outline-primary" @click="sessionNew">Новая сессия</b-btn>
+                        </b-button-group>
+                    </b-col>
+                </template>
+                <template v-if="session.status == 'timeout'">
+                    <b-col>
+                        <b-btn size="sm" variant="outline-danger" @click="sessionFinish">Завершить выдачу</b-btn>
                     </b-col>
                 </template>
             </b-row>
@@ -130,6 +127,7 @@ export default {
                 case 'paused':
                     return 'Выдача талонов приостановлена'
                 case 'timeout':
+                    return 'Выдача талонов завершена (конец дня)'
                 case 'finished':
                     return 'Выдача талонов завершена'
             }
@@ -224,9 +222,22 @@ export default {
                     setTimeout(() => this.loading = false, 1000)
                 })
         },
-        skip() {
+        skipTicket() {
             this.loading = true
-            return axios.post('operator/take/', { "token": this.token, "skip": true })
+            return axios.post('operator/close/', { "token": this.token, "skip": true })
+                .then(response => {
+                    this.fetchSession()
+                    setTimeout(() => this.loading = false, 1000)
+                })
+                .catch(error => {
+                    console.log(error.response)
+                    this.fetchSession()
+                    setTimeout(() => this.loading = false, 1000)
+                })
+        },
+        closeTicket() {
+            this.loading = true
+            return axios.post('operator/close/', { "token": this.token })
                 .then(response => {
                     this.fetchSession()
                     setTimeout(() => this.loading = false, 1000)

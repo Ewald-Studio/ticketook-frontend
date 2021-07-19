@@ -1,28 +1,32 @@
 <template>
-    <div id="monitor" class="container">
+    <div id="monitor" class="container-fluid mt-1">
         <audio src="../assets/bell.mp3" ref="audio"></audio>
         <template v-if="session.id">
-            <b-row v-if="message">
+            <!-- <b-row v-if="message" class="mb-2">
                 <b-col cols="12">
                     <h3>{{ message }}</h3>
                 </b-col>
-            </b-row>
-            <b-row>
+            </b-row> -->
+            <b-row class="mx-1">
                 <!-- <b-col cols="2">
                     <h5>Недавние</h5>
                     <p v-for="ticket in session.tickets.closed.slice(-9)" :key="ticket.id">{{ ticket.full_number }}</p>
                 </b-col> -->
-                <b-col cols="4">
-                    <h5>В очереди</h5>
-                    <p v-for="ticket in session.tickets.pending.slice(0,10)" :key="ticket.id">{{ ticket.full_number }}</p>
+                <b-col cols="3">
+                    <h4 style="text-decoration: underline">В очереди</h4>
+                    <h3 v-for="ticket in session.tickets.pending.slice(0,10)" :key="ticket.id">{{ ticket.full_number }}</h3>
                     <p v-if="session.tickets.pending.length > 10">И ещё {{ session.tickets.pending.length - 10 }}</p>
                 </b-col>
-                <b-col cols="4">
-                    <h5>Активные</h5>
-                    <p v-for="ticket in session.tickets.active" :key="ticket.id">{{ ticket.full_number }}</p>
+                <b-col cols="3" class="text-success">
+                    <h4 style="text-decoration: underline">Вызваны</h4>
+                    <h3 v-for="ticket in session.tickets.active" :key="ticket.id">{{ ticket.full_number }}</h3>
                 </b-col>
-                <b-col cols="4" class="text-center">
-                    <h1 v-if="current_ticket" class="mb-2">{{ current_ticket.full_number }}</h1>
+                <b-col cols="6" class="text-center">
+                    <transition name="fade">
+                        <h1 v-if="current_ticket" class="mt-4 mb-4 text-danger" style="font-size: 780%; background-color: #fff; padding: 1em 0">
+                            {{ current_ticket.full_number }}
+                        </h1>
+                    </transition>
                 </b-col>
             </b-row>
         </template>
@@ -36,9 +40,9 @@
 import axios from 'axios'
 import each from 'lodash/each'
 
-const LOG_REFRESH_PERIOD = 5000
+const LOG_REFRESH_PERIOD = 3000
 const SESSION_REFRESH_PERIOD = 30000
-const TICKET_SHOW_TIME = 7000
+const TICKET_SHOW_TIME = 15000
 
 export default {
     props: [
@@ -130,6 +134,7 @@ export default {
                     }
                     if (item.action == 'TICKET-TAKE') {
                         this.alarmTicket(item.ticket)
+                        this.fetchSession()
                     }
                     if (item.action == 'TICKET-CLOSE' || item.action == 'TICKET-SKIP') {
                         this.fetchSession()
@@ -156,18 +161,28 @@ export default {
         },
         alarmTicket(ticket) {
             this.new_tickets.push(ticket)
-            // this.handleNewTickets()
-            // this.timers.ticket = setTimeout(() => this.current_ticket = null, TICKET_SHOW_TIME)
+            clearInterval(this.timers.ticket)
+            this.timers.ticket = setInterval(this.handleNewTickets, TICKET_SHOW_TIME)
+            this.handleNewTickets()
         },
         handleNewTickets() {
             if (this.new_tickets.length > 0) {
                 this.current_ticket = this.new_tickets.pop()
                 this.$refs.audio.play()
             }
-            // else {
-            //     this.current_ticket = null
-            // }
+            else {
+                this.current_ticket = null
+            }
         }
     }
 }
 </script>
+
+<style>
+    .fade-enter-active, .fade-leave-active {
+        transition: opacity .5s;
+    }
+    .fade-enter, .fade-leave-to /* .fade-leave-active до версии 2.1.8 */ {
+        opacity: 0;
+    }
+</style>
