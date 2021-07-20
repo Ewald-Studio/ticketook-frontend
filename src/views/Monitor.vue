@@ -2,11 +2,11 @@
     <div id="monitor" class="container-fluid mt-1">
         <audio src="../assets/bell.mp3" ref="audio"></audio>
         <template v-if="session.id">
-            <!-- <b-row v-if="message" class="mb-2">
+            <b-row v-if="message" class="mb-2 mx-1 text-warning">
                 <b-col cols="12">
                     <h3>{{ message }}</h3>
                 </b-col>
-            </b-row> -->
+            </b-row>
             <b-row class="mx-1">
                 <!-- <b-col cols="2">
                     <h5>Недавние</h5>

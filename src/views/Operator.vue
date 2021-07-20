@@ -26,7 +26,10 @@
                 </template>
                 <template v-else>
                     <b-col>
-                        <b-btn size="lg" variant="success" @click="take">Принять</b-btn>
+                        <div class="mb-2" v-for="service in zone.services" :key="service.id">
+                            <b-btn size="lg" :disabled="!checkTicketsCount(service.id)" variant="primary" @click="take(service.slug)">{{ service.name }} ({{ checkTicketsCount(service.id) }})</b-btn>
+                        </div>
+                        <b-btn size="lg" variant="success" @click="take()">Принять любой</b-btn>
                     </b-col>
                 </template>
             </b-row>
@@ -35,6 +38,7 @@
                 <template v-if="session.status == 'active'">
                     <b-col>
                         <b-button-group>
+                            <b-btn size="sm" variant="outline-primary" v-b-modal.session-settings-modal>Лимиты</b-btn>
                             <b-btn size="sm" variant="outline-warning" @click="sessionPause">Приостановить выдачу</b-btn>
                             <b-btn size="sm" variant="outline-danger" @click="sessionFinish">Завершить выдачу</b-btn>
                         </b-button-group>
@@ -50,7 +54,7 @@
                         <b-button-group class="text-center">
                             <b-btn size="sm" variant="outline-info" @click="sessionResume">Возобновить выдачу</b-btn>
                             <b-btn size="sm" variant="outline-danger" @click="sessionSkipPendingTickets">Пропустить все талоны</b-btn>
-                            <b-btn size="sm" variant="outline-primary" @click="sessionNew">Новая сессия</b-btn>
+                            <b-btn size="sm" variant="outline-primary" v-b-modal.new-session-modal>Новая сессия</b-btn>
                         </b-button-group>
                     </b-col>
                 </template>
@@ -67,13 +71,32 @@
                 </b-col>
             </b-row>
         </template>
-        <template v-else>
+        <template v-else-if="initialLoading == false">
             <b-row>
                 <b-col class="text-center mt-4">
                     <b-btn size="lg" variant="success" @click="sessionNew">Новая сессия</b-btn>
                 </b-col>
             </b-row>
         </template>
+
+        <b-modal id="session-settings-modal" ok-title="ОК" cancel-title="Отмена" @ok="setSessionSettings">
+            <b-form>
+                <b-form-group v-for="service in zone.services" :key="service.id" class="mb-1">
+                    {{ service.name }}
+                    <b-form-spinbutton :min="0" v-model="sessionSettings[service.id]"></b-form-spinbutton>
+                </b-form-group>
+            </b-form>
+        </b-modal>
+
+        <b-modal id="new-session-modal" ok-title="ОК" cancel-title="Отмена" @ok="sessionNew">
+            <b-form>
+                <b-form-group v-for="service in zone.services" :key="service.id" class="mb-1">
+                    {{ service.name }}
+                    <b-form-spinbutton :min="0" v-model="sessionSettings[service.id]"></b-form-spinbutton>
+                </b-form-group>
+            </b-form>
+        </b-modal>
+
     </div>
 </template>
 
@@ -81,6 +104,7 @@
 import axios from 'axios'
 import filter from 'lodash/filter'
 import each from 'lodash/each'
+import map from 'lodash/map'
 
 const LOG_REFRESH_PERIOD = 5000
 const SESSION_REFRESH_PERIOD = 30000
@@ -117,7 +141,9 @@ export default {
                 ticket: null,
                 session: null,
             },
-            loading: false
+            loading: false,
+            initialLoading: true,
+            sessionSettings: {1: 0, 2: 0}
             // current_ticket: null
         }
     },
@@ -160,6 +186,7 @@ export default {
             return axios.get(`/zone/${this.zone_id}/info/`)
                 .then(response => {
                     this.zone = response.data
+                    this.initialLoading = false
                     this.fetchSession()
                     this.timers.session = setInterval(this.fetchSession, SESSION_REFRESH_PERIOD)
                 })
@@ -209,9 +236,11 @@ export default {
                 })
             }
         },
-        take() {
+        take(service_slug) {
             this.loading = true
-            return axios.post('operator/take/', { "token": this.token })
+            var data =  { "token": this.token }
+            if (service_slug) data['service_slug'] = service_slug
+            return axios.post('operator/take/', data)
                 .then(response => {
                     this.fetchSession()
                     setTimeout(() => this.loading = false, 1000)
@@ -249,9 +278,23 @@ export default {
                 })
         },
         sessionNew() {
-            return axios.post('session/new/', { "token": this.token, "zone_id": this.zone_id })
+            var service_limits = map(this.sessionSettings, (value,key) => { return { 'service_id': key, 'max_tickets_count': value } })
+            var data =  { "token": this.token, "zone_id": this.zone_id, "service_limits": service_limits }
+            return axios.post('session/new/', data)
                 .then(response => {
                     this.zone.active_session_id = response.data.session.id
+                    this.fetchSession()
+                })
+                .catch(error => {
+                    console.log(error.response)
+                    this.fetchSession()
+                })
+        },
+        setSessionSettings() {
+            var service_limits = map(this.sessionSettings, (value,key) => { return { 'service_id': key, 'max_tickets_count': value } })
+            var data =  { "token": this.token, "session_id": this.session.id, "service_limits": service_limits }
+            return axios.post('session/limits/', data)
+                .then(response => {
                     this.fetchSession()
                 })
                 .catch(error => {
@@ -291,6 +334,9 @@ export default {
                     this.fetchSession()
                 })
         },
+        checkTicketsCount(service_id) {
+            return filter(this.session.tickets.pending, i => i.service_id == service_id).length
+        },
         // addTicket(ticket) {
         //     this.fetchSession()
         // },
@@ -303,3 +349,8 @@ export default {
     }
 }
 </script>
+
+<style>
+    button .bi-dash { color: #000 }
+    button .bi-plus { color: #000 }
+</style>
