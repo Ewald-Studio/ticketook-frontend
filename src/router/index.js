@@ -2,6 +2,9 @@ import Vue from 'vue'
 import VueRouter from 'vue-router'
 
 import Home from '../views/Home.vue'
+import Monitor from '../views/Monitor.vue'
+import Operator from '../views/Operator.vue'
+import Terminal from '../views/Terminal.vue'
 
 Vue.use(VueRouter)
 
@@ -15,19 +18,19 @@ const routes = [
     path: '/monitor/:zone_id',
     name: 'monitor',
     props: true,
-    component: () => import(/* webpackChunkName: "monitor" */ '../views/Monitor.vue')
+    component: Monitor
   },
   {
     path: '/operator/:zone_id',
     name: 'operator',
     props: true,
-    component: () => import(/* webpackChunkName: "about" */ '../views/Operator.vue')
+    component: Operator
   },
   {
     path: '/terminal/:zone_id',
     name: 'terminal',
     props: true,
-    component: () => import(/* webpackChunkName: "terminal" */ '../views/Terminal.vue')
+    component: Terminal
   },
 ]
 

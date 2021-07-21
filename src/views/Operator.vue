@@ -7,7 +7,7 @@
                     <h1>{{ session.tickets.pending.length }}</h1>
                 </b-col>
                 <b-col class="text-center" v-if="current_ticket">
-                    <h1>Текущий талон</h1>
+                    <h1>На приёме</h1>
                     <h1 v-if="!loading">{{ current_ticket.full_number }}</h1>
                     <h1 v-else><b-spinner></b-spinner></h1>
                 </b-col>
