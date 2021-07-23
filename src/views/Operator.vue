@@ -38,6 +38,7 @@
                 <template v-if="session.status == 'active'">
                     <b-col>
                         <b-button-group>
+                            <b-btn size="sm" variant="outline-info" v-b-modal.services-modal>Услуги</b-btn>
                             <b-btn size="sm" variant="outline-primary" v-b-modal.session-settings-modal>Лимиты</b-btn>
                             <b-btn size="sm" variant="outline-warning" @click="sessionPause">Приостановить выдачу</b-btn>
                             <b-btn size="sm" variant="outline-danger" @click="sessionFinish">Завершить выдачу</b-btn>
@@ -53,8 +54,8 @@
                     <b-col>
                         <b-button-group class="text-center">
                             <b-btn size="sm" variant="outline-info" @click="sessionResume">Возобновить выдачу</b-btn>
-                            <b-btn size="sm" variant="outline-danger" @click="sessionSkipPendingTickets">Пропустить все талоны</b-btn>
-                            <b-btn size="sm" variant="outline-primary" v-b-modal.new-session-modal>Новая сессия</b-btn>
+                            <!--<b-btn size="sm" variant="outline-danger" @click="sessionSkipPendingTickets">Пропустить все талоны</b-btn>-->
+                            <b-btn size="sm" variant="outline-warning" @click="sessionNew">Новая сессия</b-btn>
                         </b-button-group>
                     </b-col>
                 </template>
@@ -83,7 +84,7 @@
             <b-form>
                 <b-form-group v-for="service in zone.services" :key="service.id" class="mb-1">
                     {{ service.name }}
-                    <b-form-spinbutton :min="0" v-model="sessionSettings[service.id]"></b-form-spinbutton>
+                    <b-form-spinbutton :min="0" :max="9999" v-model="sessionSettings[service.id]"></b-form-spinbutton>
                 </b-form-group>
             </b-form>
         </b-modal>
@@ -92,7 +93,16 @@
             <b-form>
                 <b-form-group v-for="service in zone.services" :key="service.id" class="mb-1">
                     {{ service.name }}
-                    <b-form-spinbutton :min="0" v-model="sessionSettings[service.id]"></b-form-spinbutton>
+                    <b-form-spinbutton :min="0" :max="9999" v-model="sessionSettings[service.id]"></b-form-spinbutton>
+                </b-form-group>
+            </b-form>
+        </b-modal>
+
+        <b-modal id="services-modal" ok-title="ОК" ok-only>
+            <b-form>
+                <b-form-group v-for="service in zone.services" :key="service.id" class="mb-1">
+                    <b-btn v-if="checkServiceEnabled(service.id)" @click="disableService(service.id)"><b-icon-check></b-icon-check>{{ service.name }}</b-btn>
+                    <b-btn v-else class="text-muted" @click="enableService(service.id)"><b-icon-x></b-icon-x>{{ service.name }}</b-btn>
                 </b-form-group>
             </b-form>
         </b-modal>
@@ -337,6 +347,26 @@ export default {
         checkTicketsCount(service_id) {
             return filter(this.session.tickets.pending, i => i.service_id == service_id).length
         },
+        disableService(service_id) {
+            return axios.post(`session/${this.session.id}/service-availability/`, { "token": this.token, "service_id": service_id, "service_is_disabled": true })
+                .then(this.fetchSession)
+                .catch(error => {
+                    console.log(error.response)
+                    this.fetchSession()
+                })
+        },
+        enableService(service_id) {
+            return axios.post(`session/${this.session.id}/service-availability/`, { "token": this.token, "service_id": service_id, "service_is_disabled": false })
+                .then(this.fetchSession)
+                .catch(error => {
+                    console.log(error.response)
+                    this.fetchSession()
+                })
+        },
+        checkServiceEnabled(service_id) {
+            if (this.session.limits && this.session.limits[service_id] && this.session.limits[service_id].service_is_disabled) return false
+            else return true
+        }
         // addTicket(ticket) {
         //     this.fetchSession()
         // },

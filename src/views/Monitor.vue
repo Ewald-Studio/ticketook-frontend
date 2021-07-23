@@ -2,9 +2,12 @@
     <div id="monitor" class="container-fluid mt-1">
         <audio src="../assets/bell.mp3" ref="audio"></audio>
         <template v-if="session.id">
-            <b-row v-if="message" class="mb-2 mx-1 text-warning">
+            <b-row class="mb-1 mx-1">
+                <h3 style="background-color: #fff; padding-top: 0.1em; padding-bottom: 0.1em" class="blink_me text-center text-danger">Сегодня: {{ available_services_str }}</h3>
+            </b-row>
+            <b-row v-if="message" class="mb-1 mx-1 text-warning">
                 <b-col cols="12">
-                    <h3>{{ message }}</h3>
+                    <h4>{{ message }}</h4>
                 </b-col>
             </b-row>
             <b-row class="mx-1">
@@ -14,16 +17,16 @@
                 </b-col> -->
                 <b-col cols="3">
                     <h4 style="text-decoration: underline">В очереди</h4>
-                    <h3 v-for="ticket in session.tickets.pending.slice(0,10)" :key="ticket.id">{{ ticket.full_number }}</h3>
+                    <h3 v-for="ticket in session.tickets.pending.slice(0,8)" :key="ticket.id">{{ ticket.full_number }}</h3>
                     <p v-if="session.tickets.pending.length > 10">И ещё {{ session.tickets.pending.length - 10 }}</p>
                 </b-col>
                 <b-col cols="3" class="text-success">
-                    <h4 style="text-decoration: underline">Вызваны</h4>
-                    <h3 v-for="ticket in session.tickets.active" :key="ticket.id">{{ ticket.full_number }}</h3>
+                    <h4 style="text-decoration: underline">На приёме</h4>
+                    <h3 v-for="ticket in session.tickets.active.slice(0,8)" :key="ticket.id">{{ ticket.full_number }}</h3>
                 </b-col>
                 <b-col cols="6" class="text-center">
                     <transition name="fade">
-                        <h1 v-if="current_ticket" class="mt-4 mb-4 text-danger" style="font-size: 780%; background-color: #fff; padding: 1em 0">
+                        <h1 v-if="current_ticket" class="mt-4 mb-4 text-danger" style="font-size: 780%; background-color: #fff; padding: 0.9em 0">
                             {{ current_ticket.full_number }}
                         </h1>
                     </transition>
@@ -39,6 +42,8 @@
 <script>
 import axios from 'axios'
 import each from 'lodash/each'
+import filter from 'lodash/filter'
+import map from 'lodash/map'
 
 const LOG_REFRESH_PERIOD = 3000
 const SESSION_REFRESH_PERIOD = 30000
@@ -64,7 +69,8 @@ export default {
                     pending: [],
                     closed: [],
                     active: [],
-                }
+                }, 
+                limits: {}
             },
             timers: {
                 log: null,
@@ -86,6 +92,15 @@ export default {
                     return 'Выдача талонов завершена'
             }
             return false
+        },
+        available_services() {
+            return filter(this.zone.services, service => {
+                if(this.session.limits[service.id] && this.session.limits[service.id].service_is_disabled == true) return false
+                else return true
+            })
+        },
+        available_services_str() {
+            return map(this.available_services, i => i.name).join(', ')
         }
     },
     mounted() {
@@ -185,4 +200,14 @@ export default {
     .fade-enter, .fade-leave-to /* .fade-leave-active до версии 2.1.8 */ {
         opacity: 0;
     }
+
+.blink_me {
+  #animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
 </style>
