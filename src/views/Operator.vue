@@ -1,112 +1,126 @@
 <template>
     <div id="operator" class="container">
-        <template v-if="session.id">
+
+        <template v-if="operator_id == null">
             <b-row>
                 <b-col class="text-center">
-                    <h1>В очереди</h1>
-                    <h1>{{ session.tickets.pending.length }}</h1>
-                </b-col>
-                <b-col class="text-center" v-if="current_ticket">
-                    <h1>На приёме</h1>
-                    <h1 v-if="!loading">{{ current_ticket.full_number }}</h1>
-                    <h1 v-else><b-spinner></b-spinner></h1>
+                    <div class="mb-2" v-for="operator in zone.operators" :key="operator.id">
+                        <b-btn @click="login(operator.id)">{{ operator.name }}</b-btn>
+                    </div>
                 </b-col>
             </b-row>
-            <b-row class="text-center mt-4" v-if="session.tickets.pending.length > 0 || current_ticket">
-                <template v-if="current_ticket">
-                    <b-col>
-                        <b-btn size="lg" variant="success" :disabled="loading" @click="closeTicket">
-                            Закрыть талон
-                        </b-btn>
-                        <br><br>
-                        <b-btn variant="outline-primary" :disabled="loading" @click="skipTicket">
-                            Пропустить талон
-                        </b-btn>
+        </template>
+
+        <template v-else>
+
+            <template v-if="session.id">
+                <b-row>
+                    <b-col class="text-center">
+                        <h1>В очереди</h1>
+                        <h1>{{ session.tickets.pending.length }}</h1>
                     </b-col>
-                </template>
-                <template v-else>
-                    <b-col>
-                        <div class="mb-2" v-for="service in zone.services" :key="service.id">
-                            <b-btn size="lg" :disabled="loading || !checkTicketsCount(service.id)" variant="primary" @click="take(service.slug)">{{ service.name }} ({{ checkTicketsCount(service.id) }})</b-btn>
-                        </div>
-                        <b-btn size="lg" variant="success" :disabled="loading" @click="take()">Принять любой</b-btn>
+                    <b-col class="text-center" v-if="current_ticket">
+                        <h1>На приёме</h1>
+                        <h1 v-if="!loading">{{ current_ticket.full_number }}</h1>
+                        <h1 v-else><b-spinner></b-spinner></h1>
                     </b-col>
-                </template>
-            </b-row>
-            <b-row class="mt-4 text-center">
-                <hr class="mb-4">
-                <template v-if="session.status == 'active'">
-                    <b-col>
-                        <b-button-group>
-                            <b-btn size="sm" variant="outline-info" v-b-modal.services-modal>Услуги</b-btn>
-                            <b-btn size="sm" variant="outline-primary" v-b-modal.session-settings-modal>Лимиты</b-btn>
-                            <b-btn size="sm" variant="outline-warning" @click="sessionPause">Приостановить выдачу</b-btn>
-                            <b-btn size="sm" variant="outline-danger" @click="sessionFinish">Завершить выдачу</b-btn>
-                        </b-button-group>
-                    </b-col>
-                </template>
-                <template v-if="session.status == 'paused'">
-                    <b-col>
-                        <b-btn size="sm" variant="outline-info" @click="sessionResume">Возобновить выдачу</b-btn>
-                    </b-col>
-                </template>
-                <template v-if="session.status == 'finished'">
-                    <b-col>
-                        <b-button-group class="text-center">
+                </b-row>
+                <b-row class="text-center mt-4" v-if="session.tickets.pending.length > 0 || current_ticket">
+                    <template v-if="current_ticket">
+                        <b-col>
+                            <b-btn size="lg" variant="success" :disabled="loading" @click="closeTicket">
+                                Закрыть талон
+                            </b-btn>
+                            <br><br>
+                            <b-btn variant="outline-primary" :disabled="loading" @click="skipTicket">
+                                Пропустить талон
+                            </b-btn>
+                        </b-col>
+                    </template>
+                    <template v-else>
+                        <b-col>
+                            <div class="mb-2" v-for="service in zone.services" :key="service.id">
+                                <b-btn size="lg" :disabled="loading || !checkTicketsCount(service.id)" variant="primary" @click="take(service.slug)">{{ service.name }} ({{ checkTicketsCount(service.id) }})</b-btn>
+                            </div>
+                            <b-btn size="lg" variant="success" :disabled="loading" @click="take()">Принять любой</b-btn>
+                        </b-col>
+                    </template>
+                </b-row>
+                <b-row class="mt-4 text-center">
+                    <hr class="mb-4">
+                    <template v-if="session.status == 'active'">
+                        <b-col>
+                            <b-button-group>
+                                <b-btn size="sm" variant="outline-info" v-b-modal.services-modal>Услуги</b-btn>
+                                <b-btn size="sm" variant="outline-primary" v-b-modal.session-settings-modal>Лимиты</b-btn>
+                                <b-btn size="sm" variant="outline-warning" @click="sessionPause">Приостановить выдачу</b-btn>
+                                <b-btn size="sm" variant="outline-danger" @click="sessionFinish">Завершить выдачу</b-btn>
+                            </b-button-group>
+                        </b-col>
+                    </template>
+                    <template v-if="session.status == 'paused'">
+                        <b-col>
                             <b-btn size="sm" variant="outline-info" @click="sessionResume">Возобновить выдачу</b-btn>
-                            <!--<b-btn size="sm" variant="outline-danger" @click="sessionSkipPendingTickets">Пропустить все талоны</b-btn>-->
-                            <b-btn size="sm" variant="outline-warning" @click="sessionNew">Новая сессия</b-btn>
-                        </b-button-group>
-                    </b-col>
-                </template>
-                <template v-if="session.status == 'timeout'">
+                        </b-col>
+                    </template>
+                    <template v-if="session.status == 'finished'">
+                        <b-col>
+                            <b-button-group class="text-center">
+                                <b-btn size="sm" variant="outline-info" @click="sessionResume">Возобновить выдачу</b-btn>
+                                <!--<b-btn size="sm" variant="outline-danger" @click="sessionSkipPendingTickets">Пропустить все талоны</b-btn>-->
+                                <b-btn size="sm" variant="outline-warning" @click="sessionNew">Новая сессия</b-btn>
+                            </b-button-group>
+                        </b-col>
+                    </template>
+                    <template v-if="session.status == 'timeout'">
+                        <b-col>
+                            <b-btn size="sm" variant="outline-danger" @click="sessionFinish">Завершить выдачу</b-btn>
+                        </b-col>
+                    </template>
+                </b-row>
+                <b-row class="mt-4 text-center" v-if="message">
+                    <hr class="mb-4">
                     <b-col>
-                        <b-btn size="sm" variant="outline-danger" @click="sessionFinish">Завершить выдачу</b-btn>
+                        {{ message }}
                     </b-col>
-                </template>
-            </b-row>
-            <b-row class="mt-4 text-center" v-if="message">
-                <hr class="mb-4">
-                <b-col>
-                    {{ message }}
-                </b-col>
-            </b-row>
+                </b-row>
+            </template>
+            <template v-else-if="initialLoading == false">
+                <b-row>
+                    <b-col class="text-center mt-4">
+                        <b-btn size="lg" variant="success" @click="sessionNew">Новая сессия</b-btn>
+                    </b-col>
+                </b-row>
+            </template>
+
+            <b-modal id="session-settings-modal" ok-title="ОК" cancel-title="Отмена" @ok="setSessionSettings">
+                <b-form>
+                    <b-form-group v-for="service in zone.services" :key="service.id" class="mb-1">
+                        {{ service.name }}
+                        <b-form-spinbutton :min="0" :max="9999" v-model="sessionSettings[service.id]"></b-form-spinbutton>
+                    </b-form-group>
+                </b-form>
+            </b-modal>
+
+            <b-modal id="new-session-modal" ok-title="ОК" cancel-title="Отмена" @ok="sessionNew">
+                <b-form>
+                    <b-form-group v-for="service in zone.services" :key="service.id" class="mb-1">
+                        {{ service.name }}
+                        <b-form-spinbutton :min="0" :max="9999" v-model="sessionSettings[service.id]"></b-form-spinbutton>
+                    </b-form-group>
+                </b-form>
+            </b-modal>
+
+            <b-modal id="services-modal" ok-title="ОК" ok-only>
+                <b-form>
+                    <b-form-group v-for="service in zone.services" :key="service.id" class="mb-1">
+                        <b-btn v-if="checkServiceEnabled(service.id)" @click="disableService(service.id)"><b-icon-check></b-icon-check>{{ service.name }}</b-btn>
+                        <b-btn v-else class="text-muted" @click="enableService(service.id)"><b-icon-x></b-icon-x>{{ service.name }}</b-btn>
+                    </b-form-group>
+                </b-form>
+            </b-modal>
+
         </template>
-        <template v-else-if="initialLoading == false">
-            <b-row>
-                <b-col class="text-center mt-4">
-                    <b-btn size="lg" variant="success" @click="sessionNew">Новая сессия</b-btn>
-                </b-col>
-            </b-row>
-        </template>
-
-        <b-modal id="session-settings-modal" ok-title="ОК" cancel-title="Отмена" @ok="setSessionSettings">
-            <b-form>
-                <b-form-group v-for="service in zone.services" :key="service.id" class="mb-1">
-                    {{ service.name }}
-                    <b-form-spinbutton :min="0" :max="9999" v-model="sessionSettings[service.id]"></b-form-spinbutton>
-                </b-form-group>
-            </b-form>
-        </b-modal>
-
-        <b-modal id="new-session-modal" ok-title="ОК" cancel-title="Отмена" @ok="sessionNew">
-            <b-form>
-                <b-form-group v-for="service in zone.services" :key="service.id" class="mb-1">
-                    {{ service.name }}
-                    <b-form-spinbutton :min="0" :max="9999" v-model="sessionSettings[service.id]"></b-form-spinbutton>
-                </b-form-group>
-            </b-form>
-        </b-modal>
-
-        <b-modal id="services-modal" ok-title="ОК" ok-only>
-            <b-form>
-                <b-form-group v-for="service in zone.services" :key="service.id" class="mb-1">
-                    <b-btn v-if="checkServiceEnabled(service.id)" @click="disableService(service.id)"><b-icon-check></b-icon-check>{{ service.name }}</b-btn>
-                    <b-btn v-else class="text-muted" @click="enableService(service.id)"><b-icon-x></b-icon-x>{{ service.name }}</b-btn>
-                </b-form-group>
-            </b-form>
-        </b-modal>
-
     </div>
 </template>
 
@@ -119,9 +133,6 @@ import map from 'lodash/map'
 const LOG_REFRESH_PERIOD = 5000
 const SESSION_REFRESH_PERIOD = 30000
 const TICKET_SHOW_TIME = 5000
-
-const OPERATOR_ID = 1
-const PIN = '12345'
 
 export default {
     props: [
@@ -145,6 +156,7 @@ export default {
                     active: [],
                 }
             },
+            operator_id: null,
             token: null,
             timers: {
                 log: null,
@@ -176,7 +188,7 @@ export default {
         }
     },
     mounted() {
-        this.login()
+        // this.login()
         this.fetchZoneInfo()
     },
     beforeDestroy() {
@@ -185,12 +197,20 @@ export default {
         clearInterval(this.timers.session)
     },
     methods: {
-        login() {
-            return axios.post('/login/', { 'operator_id': OPERATOR_ID, 'pin': PIN })
-                .then(response => this.token = response.data.token)
+        login(operator_id) {
+            return axios.post('/login/', { 'operator_id': operator_id, 'pin': '' })
+                .then(response => {
+                    this.token = response.data.token
+                    this.operator_id = operator_id
+                })
                 .catch(error => {
                     alert('Ошибка входа в систему')
                 })
+        },
+        logout() {
+            alert("Другой пользователь вошел в систему")
+            this.operator_id = null
+            this.token = null
         },
         fetchZoneInfo() {
             return axios.get(`/zone/${this.zone_id}/info/`)
@@ -256,7 +276,8 @@ export default {
                     setTimeout(() => this.loading = false, 1000)
                 })
                 .catch(error => {
-                    console.log(error.response)
+                    // console.log(error.response)
+                    if (error.response.status == 401) this.logout()
                     this.fetchSession()
                     setTimeout(() => this.loading = false, 1000)
                 })
@@ -270,6 +291,7 @@ export default {
                 })
                 .catch(error => {
                     console.log(error.response)
+                    if (error.response.status == 401) this.logout()
                     this.fetchSession()
                     setTimeout(() => this.loading = false, 1000)
                 })
@@ -283,6 +305,7 @@ export default {
                 })
                 .catch(error => {
                     console.log(error.response)
+                    if (error.response.status == 401) this.logout()
                     this.fetchSession()
                     setTimeout(() => this.loading = false, 1000)
                 })
@@ -297,6 +320,7 @@ export default {
                 })
                 .catch(error => {
                     console.log(error.response)
+                    if (error.response.status == 401) this.logout()
                     this.fetchSession()
                 })
         },
@@ -309,6 +333,7 @@ export default {
                 })
                 .catch(error => {
                     console.log(error.response)
+                    if (error.response.status == 401) this.logout()
                     this.fetchSession()
                 })
         },
@@ -317,6 +342,7 @@ export default {
                 .then(this.fetchSession)
                 .catch(error => {
                     console.log(error.response)
+                    if (error.response.status == 401) this.logout()
                     this.fetchSession()
                 })
         },
@@ -325,6 +351,7 @@ export default {
                 .then(this.fetchSession)
                 .catch(error => {
                     console.log(error.response)
+                    if (error.response.status == 401) this.logout()
                     this.fetchSession()
                 })
         },
@@ -333,6 +360,7 @@ export default {
                 .then(this.fetchSession)
                 .catch(error => {
                     console.log(error.response)
+                    if (error.response.status == 401) this.logout()
                     this.fetchSession()
                 })
         },
@@ -341,6 +369,7 @@ export default {
                 .then(this.fetchSession)
                 .catch(error => {
                     console.log(error.response)
+                    if (error.response.status == 401) this.logout()
                     this.fetchSession()
                 })
         },
@@ -352,6 +381,7 @@ export default {
                 .then(this.fetchSession)
                 .catch(error => {
                     console.log(error.response)
+                    if (error.response.status == 401) this.logout()
                     this.fetchSession()
                 })
         },
@@ -360,6 +390,7 @@ export default {
                 .then(this.fetchSession)
                 .catch(error => {
                     console.log(error.response)
+                    if (error.response.status == 401) this.logout()
                     this.fetchSession()
                 })
         },
