@@ -262,6 +262,11 @@ export default {
                     if (item.action == 'TICKET-CLOSE' || item.action == 'TICKET-SKIP') {
                         this.fetchSession()
                     }
+                    if (item.action == 'SESSION_NEW') {
+                        clearInterval(this.timers.log)
+                        clearInterval(this.timers.session)
+                        this.fetchZoneInfo()
+                    }
                     if (item.action == 'SESSION-PAUSE') {
                         this.session.status = 'paused'
                     }
