@@ -198,7 +198,7 @@ export default {
     },
     methods: {
         login(operator_id) {
-            return axios.post('/login/', { 'operator_id': operator_id, 'pin': '' })
+            return axios.post('/login/', { 'operator_id': operator_id, 'pin': '12345' })
                 .then(response => {
                     this.token = response.data.token
                     this.operator_id = operator_id
