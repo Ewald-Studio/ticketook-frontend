@@ -4,8 +4,8 @@
         <template v-if="operator_id == null">
             <b-row>
                 <b-col class="text-center">
-                    <div class="mb-2" v-for="operator in zone.operators" :key="operator.id">
-                        <b-btn @click="login(operator.id, operator.name)">{{ operator.name }}</b-btn>
+                    <div class="mt-4 mb-4" v-for="operator in zone.operators" :key="operator.id">
+                        <b-btn size="lg" variant="primary" @click="login(operator.id)">{{ operator.name }}</b-btn>
                     </div>
                 </b-col>
             </b-row>
@@ -190,7 +190,7 @@ export default {
             return false
         },
         current_ticket() {
-            let tickets = filter(this.session.tickets.active, i => i.operator_id == OPERATOR_ID)
+            let tickets = filter(this.session.tickets.active, i => i.operator_id == this.operator_id)
             if (tickets.length) return tickets[0]
             else return null
         }
