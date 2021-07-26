@@ -5,16 +5,21 @@
             <b-row>
                 <b-col class="text-center">
                     <div class="mb-2" v-for="operator in zone.operators" :key="operator.id">
-                        <b-btn @click="login(operator.id)">{{ operator.name }}</b-btn>
+                        <b-btn @click="login(operator.id, operator.name)">{{ operator.name }}</b-btn>
                     </div>
                 </b-col>
             </b-row>
         </template>
 
         <template v-else>
+            <b-row class="mt-2">
+                <b-col class="text-center">
+                    <p>{{ operator_name }}</p>
+                </b-col>
+            </b-row>
 
             <template v-if="session.id">
-                <b-row>
+                <b-row class="mt-2">
                     <b-col class="text-center">
                         <h1>В очереди</h1>
                         <h1>{{ session.tickets.pending.length }}</h1>
@@ -53,6 +58,8 @@
                             <b-button-group>
                                 <b-btn size="sm" variant="outline-info" v-b-modal.services-modal>Услуги</b-btn>
                                 <b-btn size="sm" variant="outline-primary" v-b-modal.session-settings-modal>Лимиты</b-btn>
+                            </b-button-group>
+                            <b-button-group>
                                 <b-btn size="sm" variant="outline-warning" @click="sessionPause">Приостановить выдачу</b-btn>
                                 <b-btn size="sm" variant="outline-danger" @click="sessionFinish">Завершить выдачу</b-btn>
                             </b-button-group>
@@ -157,6 +164,7 @@ export default {
                 }
             },
             operator_id: null,
+            operator_name: '',
             token: null,
             timers: {
                 log: null,
@@ -197,11 +205,12 @@ export default {
         clearInterval(this.timers.session)
     },
     methods: {
-        login(operator_id) {
+        login(operator_id, operator_name) {
             return axios.post('/login/', { 'operator_id': operator_id, 'pin': '12345' })
                 .then(response => {
                     this.token = response.data.token
                     this.operator_id = operator_id
+                    this.operator_name = operator_name
                 })
                 .catch(error => {
                     alert('Ошибка входа в систему')

@@ -27,15 +27,22 @@
                 <b-col cols="9" class="text-success">
                     <h4 style="text-decoration: underline">На приёме</h4>
                     <!-- <h3 v-for="ticket in session.tickets.active.slice(0,8)" :key="ticket.id">{{ ticket.full_number }}</h3> -->
+                    <h1 
+                        v-for="ticket in session.tickets.active" 
+                        :key="ticket.id" 
+                        class="mt-4 mb-4 text-danger" 
+                        style="font-size: 400%; padding: 0.2em 0">
+                        {{ ticket.full_number }}
+                    </h1>
 
                 </b-col>
-                <b-col cols="6" class="text-center">
+                <!-- <b-col cols="6" class="text-center">
                     <transition name="fade">
                         <h1 v-if="current_ticket" class="mt-4 mb-4 text-danger" style="font-size: 780%; background-color: #fff; padding: 0.9em 0">
                             {{ current_ticket.full_number }}
                         </h1>
                     </transition>
-                </b-col>
+                </b-col> -->
             </b-row>
         </template>
         <template v-else>
