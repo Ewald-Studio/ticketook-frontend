@@ -22,11 +22,12 @@
                 <b-col cols="3">
                     <h4 style="text-decoration: underline">В очереди</h4>
                     <h3 v-for="ticket in session.tickets.pending.slice(0,8)" :key="ticket.id">{{ ticket.full_number }}</h3>
-                    <p v-if="session.tickets.pending.length > 10">И ещё {{ session.tickets.pending.length - 10 }}</p>
+                    <p v-if="session.tickets.pending.length > 9">И ещё {{ session.tickets.pending.length - 9 }}</p>
                 </b-col>
-                <b-col cols="3" class="text-success">
+                <b-col cols="9" class="text-success">
                     <h4 style="text-decoration: underline">На приёме</h4>
-                    <h3 v-for="ticket in session.tickets.active.slice(0,8)" :key="ticket.id">{{ ticket.full_number }}</h3>
+                    <!-- <h3 v-for="ticket in session.tickets.active.slice(0,8)" :key="ticket.id">{{ ticket.full_number }}</h3> -->
+
                 </b-col>
                 <b-col cols="6" class="text-center">
                     <transition name="fade">
