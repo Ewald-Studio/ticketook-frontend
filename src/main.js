@@ -8,7 +8,7 @@ import { BootstrapVue, IconsPlugin } from 'bootstrap-vue'
 import 'bootstrap/dist/css/bootstrap.css'
 import 'bootstrap-vue/dist/bootstrap-vue.css'
 
-import "bootswatch/dist/superhero/bootstrap.min.css"
+import "bootswatch/dist/litera/bootstrap.min.css"
 
 Vue.use(BootstrapVue)
 Vue.use(IconsPlugin)

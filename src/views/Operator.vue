@@ -27,9 +27,9 @@
                 <template v-else>
                     <b-col>
                         <div class="mb-2" v-for="service in zone.services" :key="service.id">
-                            <b-btn size="lg" :disabled="!checkTicketsCount(service.id)" variant="primary" @click="take(service.slug)">{{ service.name }} ({{ checkTicketsCount(service.id) }})</b-btn>
+                            <b-btn size="lg" :disabled="loading || !checkTicketsCount(service.id)" variant="primary" @click="take(service.slug)">{{ service.name }} ({{ checkTicketsCount(service.id) }})</b-btn>
                         </div>
-                        <b-btn size="lg" variant="success" @click="take()">Принять любой</b-btn>
+                        <b-btn size="lg" variant="success" :disabled="loading" @click="take()">Принять любой</b-btn>
                     </b-col>
                 </template>
             </b-row>

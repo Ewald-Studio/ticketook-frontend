@@ -2,8 +2,12 @@
     <div id="monitor" class="container-fluid mt-1">
         <audio src="../assets/bell.mp3" ref="audio"></audio>
         <template v-if="session.id">
-            <b-row class="mb-1 mx-1">
-                <h3 style="background-color: #fff; padding-top: 0.1em; padding-bottom: 0.1em" class="blink_me text-center text-danger">Сегодня: {{ available_services_str }}</h3>
+            <b-row class="mb-1 mx-1" v-if="session.status != 'finished'">
+                <h3 
+                    style="background-color: #fff; padding-top: 0.2em; padding-bottom: 0.2em" 
+                    class="text-center text-danger">
+                    <span class="blink_me">Сегодня: {{ available_services_str }}</span>
+                </h3>
             </b-row>
             <b-row v-if="message" class="mb-1 mx-1 text-warning">
                 <b-col cols="12">
@@ -47,7 +51,7 @@ import map from 'lodash/map'
 
 const LOG_REFRESH_PERIOD = 3000
 const SESSION_REFRESH_PERIOD = 30000
-const TICKET_SHOW_TIME = 15000
+const TICKET_SHOW_TIME = 600000
 
 export default {
     props: [
@@ -152,6 +156,7 @@ export default {
                         this.fetchSession()
                     }
                     if (item.action == 'TICKET-CLOSE' || item.action == 'TICKET-SKIP') {
+                        this.handleNewTickets()
                         this.fetchSession()
                     }
                     if (item.action == 'SESSION-NEW') {
@@ -202,12 +207,14 @@ export default {
     }
 
 .blink_me {
-  #animation: blinker 1s linear infinite;
+  animation: blinker 5s linear infinite;
+  animation-direction: alternate;
 }
 
 @keyframes blinker {
-  50% {
-    opacity: 0;
-  }
+   45% { opacity: 1; }
+   50% { opacity: 0; }
+   55% { opacity: 1; }
+
 }
 </style>
