@@ -19,19 +19,19 @@
                     <h5>Недавние</h5>
                     <p v-for="ticket in session.tickets.closed.slice(-9)" :key="ticket.id">{{ ticket.full_number }}</p>
                 </b-col> -->
-                <b-col cols="3">
+                <b-col cols="5">
                     <h4 style="text-decoration: underline">В очереди</h4>
                     <h3 v-for="ticket in session.tickets.pending.slice(0,8)" :key="ticket.id">{{ ticket.full_number }}</h3>
                     <p v-if="session.tickets.pending.length > 9">И ещё {{ session.tickets.pending.length - 9 }}</p>
                 </b-col>
-                <b-col cols="9" class="text-success">
+                <b-col cols="7" class="text-success">
                     <h4 style="text-decoration: underline">На приёме</h4>
                     <!-- <h3 v-for="ticket in session.tickets.active.slice(0,8)" :key="ticket.id">{{ ticket.full_number }}</h3> -->
                     <h1 
                         v-for="ticket in session.tickets.active" 
                         :key="ticket.id" 
-                        class="mt-4 mb-4 text-danger" 
-                        style="font-size: 400%; padding: 0.2em 0">
+                        class="mt-2 mb-2 text-danger" 
+                        style="font-size: 800%;">
                         {{ ticket.full_number }}
                     </h1>
 
