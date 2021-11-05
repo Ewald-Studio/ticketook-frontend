@@ -5,7 +5,7 @@
             <b-row>
                 <b-col class="text-center">
                     <div class="mt-4 mb-4" v-for="operator in zone.operators" :key="operator.id">
-                        <b-btn size="lg" variant="primary" @click="login(operator.id)">{{ operator.name }}</b-btn>
+                        <b-btn size="lg" variant="primary" @click="login(operator.id, operator.name)">{{ operator.name }}</b-btn>
                     </div>
                 </b-col>
             </b-row>
@@ -55,10 +55,10 @@
                     <hr class="mb-4">
                     <template v-if="session.status == 'active'">
                         <b-col>
-                            <b-button-group>
+                            <b-button-group class="mb-1">
                                 <b-btn size="sm" variant="outline-info" v-b-modal.services-modal>Услуги</b-btn>
                                 <b-btn size="sm" variant="outline-primary" v-b-modal.session-settings-modal>Лимиты</b-btn>
-                            </b-button-group>
+                            </b-button-group><br>
                             <b-button-group>
                                 <b-btn size="sm" variant="outline-warning" @click="sessionPause">Приостановить выдачу</b-btn>
                                 <b-btn size="sm" variant="outline-danger" @click="sessionFinish">Завершить выдачу</b-btn>
@@ -262,7 +262,7 @@ export default {
                     if (item.action == 'TICKET-CLOSE' || item.action == 'TICKET-SKIP') {
                         this.fetchSession()
                     }
-                    if (item.action == 'SESSION_NEW') {
+                    if (item.action == 'SESSION-NEW') {
                         clearInterval(this.timers.log)
                         clearInterval(this.timers.session)
                         this.fetchZoneInfo()
